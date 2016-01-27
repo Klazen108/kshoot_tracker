@@ -41,7 +41,7 @@ html_prelude = """
     <body>
         Generated on {} using Klazen's K-Shoot Tracker Tool!
         <table>
-            <tr><th>Difficulty</th><th>Level</th><th>Score</th><th>Title</th><th>Folder</th><th>C</th></tr>
+            <tr><th>Difficulty</th><th>Level</th><th>Score</th><th>Rank</th><th>Title</th><th>Folder</th><th>C</th></tr>
             <tr>
 """.format(datetime.date.today())
 
@@ -92,6 +92,7 @@ def main():
                     percent = 0
                     is_uc = 0
                     is_puc = 0
+                    rank = ""
                     for line in f.readlines():
                         if (line.startswith("difficulty=")):
                             diff = line.split('=')[1].replace("\n","").replace("\r","")
@@ -111,38 +112,41 @@ def main():
                                             if m:
                                                 print (m.groups()[0],end="")
                                                 score = int(m.groups()[0])
+                                                rank = int(data[7])
+                                                if   (rank==5): rank="AAA"
+                                                elif (rank==4): rank="AA"
+                                                elif (rank==3): rank="A"
+                                                elif (rank==2): rank="B"
+                                                elif (rank==1): rank="C"
+                                                else:           rank="D"
                                                 percent = int(data[8])
                                                 is_uc = (data[12]=="1")
                                                 is_puc = (data[13]=="1")
-                            entries.append((title,cur_group,lvl,diff,score,percent,is_uc,is_puc))
+                            entries.append({"title":title,"group":cur_group,"level":lvl,"diff":diff,"score":score,"rank":rank,"percent":percent,"uc":is_uc,"puc":is_puc})
                             break
                     print()
     print("all songs analyzed, printing results:")
     with codecs.open(o_file,"w",encoding='utf-8') as of:
         of.write(html_prelude)
-        sorted_entries = sorted(entries,key=lambda t: (t[2],t[0]),reverse=True)
+        sorted_entries = sorted(entries,key=lambda t: (t["level"],t["title"]),reverse=True)
         for entry in sorted_entries:
             #of.write(u"{:>9} {:>2} [{:0>8}] {}   ({})".format(entry[3],entry[2],entry[4],entry[0],entry[1]))
             class_text = ""
-            score = entry[4]
-            percent = entry[5]
-            is_uc = entry[6]
-            is_puc = entry[7]
             clear_text = ""
-            if score>0:
-                if percent<70:
+            if entry["score"]>0:
+                if entry["percent"]<70:
                     class_text=" class='played' "
                 else:
-                    if is_puc:
+                    if entry["puc"]:
                         class_text=" class='puc' "
                         clear_text="PUC"
-                    elif is_uc:
+                    elif entry["uc"]:
                         class_text=" class='uc' "
                         clear_text="UC"
                     else:
                         class_text=" class='passed' "
                         clear_text="C"
-            of.write(u"<tr"+class_text+u"><td>{}</td><td>{}</td><td>{:0>8}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(entry[3],entry[2],entry[4],entry[0],entry[1],clear_text))
+            of.write(u"<tr"+class_text+u"><td>{}</td><td>{}</td><td>{:0>8}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(entry["diff"],entry["level"],entry["score"],entry["rank"],entry["title"],entry["group"],clear_text))
         of.write("</tr></body></html>")
         print("process complete!")
 if __name__ == "__main__":
