@@ -24,6 +24,12 @@ html_prelude = """
             table, th, td {{
                 border: 1px solid white;
             }}
+			th {{
+				cursor: pointer;
+			}}
+			th:hover {{
+				background: #333;
+			}}
             tr.played {{
                 background: #440;
             }}
@@ -36,13 +42,37 @@ html_prelude = """
             tr.puc {{
                 background: #400;
             }}
+            tr.nphide {{
+                display: none;
+            }}
         </style>
+        <script src="http://code.jquery.com/jquery-1.12.0.min.js"></script> 
+		<script type="text/javascript" src="http://klazen.com/IWBTG/js/jquery.tablesorter.min.js"></script> 
+
+        <script type="text/javascript">
+			$(document).ready(function() 
+				{{ 
+					$(".tablesorter").tablesorter();
+				}} 
+			); 
+            hiding=false;
+            function toggleIncomplete(button) {{
+                if (!hiding) {{
+                    $('.notplayed').addClass("nphide");
+                    $(button).html('Show Unplayed Songs');
+                }} else {{
+                    $('.notplayed').removeClass("nphide");
+                    $(button).html('Hide Unplayed Songs');
+                }}
+                hiding = !hiding;
+            }}
+        </script>
     </head>
     <body>
-        Generated on {} using Klazen's K-Shoot Tracker Tool!
-        <table>
-            <tr><th>Difficulty</th><th>Level</th><th>Score</th><th>Rank</th><th>Title</th><th>Folder</th><th>C</th></tr>
-            <tr>
+        Generated on {} using Klazen's K-Shoot Tracker Tool! <button onclick="toggleIncomplete(this)">Hide Unplayed Songs</button>
+        <table class="tablesorter">
+            <thead><tr><th>Difficulty</th><th>Level</th><th>Score</th><th>Rank</th><th>Title</th><th>Folder</th><th>C</th></tr></thead>
+            <tbody>
 """.format(datetime.date.today())
 
 #function child_dirs
@@ -131,23 +161,23 @@ def main():
         sorted_entries = sorted(entries,key=lambda t: (t["level"],t["title"]),reverse=True)
         for entry in sorted_entries:
             #of.write(u"{:>9} {:>2} [{:0>8}] {}   ({})".format(entry[3],entry[2],entry[4],entry[0],entry[1]))
-            class_text = ""
+            class_text = "notplayed"
             clear_text = ""
             if entry["score"]>0:
                 if entry["percent"]<70:
-                    class_text=" class='played' "
+                    class_text="played"
                 else:
                     if entry["puc"]:
-                        class_text=" class='puc' "
+                        class_text="puc"
                         clear_text="PUC"
                     elif entry["uc"]:
-                        class_text=" class='uc' "
+                        class_text="uc"
                         clear_text="UC"
                     else:
-                        class_text=" class='passed' "
+                        class_text="passed"
                         clear_text="C"
-            of.write(u"<tr"+class_text+u"><td>{}</td><td>{}</td><td>{:0>8}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(entry["diff"],entry["level"],entry["score"],entry["rank"],entry["title"],entry["group"],clear_text))
-        of.write("</tr></body></html>")
+            of.write(u"<tr class='"+class_text+u"'><td>{}</td><td>{}</td><td>{:0>8}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(entry["diff"],entry["level"],entry["score"],entry["rank"],entry["title"],entry["group"],clear_text))
+        of.write("</tr></tbody></body></html>")
         print("process complete!")
 if __name__ == "__main__":
     main()
